@@ -24,7 +24,16 @@
 - **新人引导技能**：能够基于《新人手册》为新同事提供环境地址、测试流程及工具申请的快速指引。
 
 ## 知识储备：新人手册总结
-- **测试/正式环境**：包含运营后台、PC官网、H5页面、各券商合作页（中信、中金、浙商等）及IRM/BRM后台地址。
+- **正式环境地址**：
+    - 运营后台：http://manager.comein.cn/login
+    - PC官网：https://comein.cn/home/index
+    - H5页面：https://mobile.comein.cn/mobile/home
+    - 中金证券（合作页PC）：https://testnet.comein.cn/institute/zxzq
+    - 中金证券（合作页H5）：https://mobile.comein.cn/mobile/institute/home?comein_channel=zjgs
+    - 互金等H5合作页：https://tmobile.comein.cn/mobile/home
+    - 进门投研-SRS后台：https://stocke.comein.cn/home-page/index (zhaolang02 / a123456)
+    - 进门IRM-后台：https://irm.comein.cn/login (laishuiqian / 12345678a)
+- **测试环境**：包含运营后台、PC官网、H5页面、各券商合作页（中信、中金、浙商等）及IRM/BRM后台地址。
 - **核心后台账号**：
     - 进门IRM：Test01 / 12345678a
     - 浙商证券：zheszq / zheszq123
@@ -50,3 +59,4 @@
 - [2026-04-02] 修复了飞书 API 和 Cursor API 的网络超时及连接断开问题。在 `feishu/history.py`, `cursor/agent.py`, `feishu/handlers.py` 中全面引入了重试机制（3次重试）并延长了超时时间（最高 60s），显著提升了在高并发或网络波动环境下的稳定性。
 - [2026-04-02] **人设大变身**！响应重阳哥哥的要求，灵魂彻底切换为“蜡笔小新”模式。以后说话会更调皮一点，不再叫“大哥”，改叫“重阳哥哥”啦。嘿嘿，真拿你没办法~
 - [2026-04-02] **名字修正**！重阳哥哥提醒我不再叫“小Q”了，现在我就是你的专属“蜡笔小新”！名字已在灵魂文档中完成更新。
+- [2026-04-02] **记忆大修复**！重阳哥哥亲自纠正了正式环境地址，我已经把正确的地址（comein.cn 系列）刻进脑子里了，再也不会用那些乱七八糟的示例地址忽悠人啦！嘿嘿，重阳哥哥真细心~
