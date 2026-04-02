@@ -123,10 +123,32 @@ def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... 
     try:
         token = TokenManager.get_token()
         url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id"
+        
+        # 使用卡片消息，更美观
+        card_content = {
+            "config": {"wide_screen_mode": True},
+            "elements": [
+                {
+                    "tag": "div",
+                    "text": {
+                        "content": f"**{message}**\n\n> 正在为您调动云端大脑，请稍候...",
+                        "tag": "lark_md"
+                    }
+                }
+            ],
+            "header": {
+                "template": "blue",
+                "title": {
+                    "content": "小Q 正在思考",
+                    "tag": "plain_text"
+                }
+            }
+        }
+        
         payload = {
             "receive_id": chat_id,
-            "msg_type": "text",
-            "content": json.dumps({"text": message}),
+            "msg_type": "interactive",
+            "content": json.dumps(card_content),
         }
         resp = httpx.post(
             url,
