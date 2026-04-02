@@ -153,6 +153,7 @@ def _process_message(message_id: str, chat_id: str, chat_type: str, sender_name:
     
     with chat_lock:
         # 在获取锁后，开始处理前，发送加载中提示
+        # 仅在非重复消息时发送
         send_loading_indicator(chat_id)
         _do_process_message(message_id, chat_id, chat_type, sender_name)
 
