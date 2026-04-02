@@ -60,14 +60,25 @@ def send_error_reply(chat_id: str, error_msg: str = "抱歉，处理请求时出
         logger.error(f"发送兜底回复异常: {e}")
 
 
-def _is_bot_mentioned(mentions) -> bool:
+def _is_bot_mentioned(message) -> bool:
     """检查消息中是否 @ 了机器人"""
-    if not mentions:
-        return False
-    bot_name = settings.feishu_bot_name
-    for m in mentions:
-        if m.name == bot_name:
+    # 1. 检查 mentions 列表
+    if message.mentions:
+        bot_name = settings.feishu_bot_name
+        for m in message.mentions:
+            if m.name == bot_name:
+                return True
+    
+    # 2. 兜底方案：检查文本内容中是否包含 @机器人名称
+    # 某些情况下 mentions 列表可能为空，但文本中包含 @
+    try:
+        content_json = json.loads(message.content)
+        text = content_json.get("text", "")
+        if f"@{settings.feishu_bot_name}" in text:
             return True
+    except:
+        pass
+        
     return False
 
 
@@ -95,7 +106,7 @@ def create_message_handler():
 
             # 群聊 + mention_only 模式：检查是否 @了机器人
             if chat_type == "group" and settings.group_chat_mode == "mention_only":
-                if not _is_bot_mentioned(message.mentions):
+                if not _is_bot_mentioned(message):
                     logger.info(f"跳过消息（未@机器人）| msg_id={message_id}")
                     return
 
