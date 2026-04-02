@@ -137,7 +137,7 @@ def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... 
         if resp.status_code == 200:
             logger.info(f"已发送加载中提示 | chat_id={chat_id}")
         else:
-            logger.error(f"发送加载中提示失败 | status={resp.status_code}")
+            logger.error(f"发送加载中提示失败 | status={resp.status_code} | body={resp.text}")
     except Exception as e:
         logger.error(f"发送加载中提示异常: {e}")
 
