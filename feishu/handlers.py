@@ -74,7 +74,8 @@ def _is_bot_mentioned(message) -> bool:
     try:
         content_json = json.loads(message.content)
         text = content_json.get("text", "")
-        if f"@{settings.feishu_bot_name}" in text:
+        # 兼容处理：检查 @魔丸 或 @小Q (旧名称)
+        if f"@{settings.feishu_bot_name}" in text or "@小Q" in text:
             return True
     except:
         pass
