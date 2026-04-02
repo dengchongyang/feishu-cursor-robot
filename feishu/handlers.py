@@ -99,9 +99,6 @@ def create_message_handler():
                     logger.info(f"跳过消息（未@机器人）| msg_id={message_id}")
                     return
 
-            # 在进入异步线程前，先发送 Loading 提示，确保反馈及时
-            send_loading_indicator(chat_id)
-
             # 获取发送者名字
             sender_open_id = sender.sender_id.open_id if sender.sender_id else ""
             sender_name = get_user_name(sender_open_id) if sender_open_id else "未知用户"
@@ -127,6 +124,9 @@ def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... 
         token = TokenManager.get_token()
         url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id"
         
+        # 记录发送开始
+        logger.debug(f"准备发送加载中提示 | chat_id={chat_id}")
+
         # 使用卡片消息，更美观
         card_content = {
             "config": {"wide_screen_mode": True},
@@ -153,16 +153,29 @@ def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... 
             "msg_type": "interactive",
             "content": json.dumps(card_content),
         }
-        resp = httpx.post(
-            url,
-            json=payload,
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            timeout=10,
-        )
+        
+        # 使用 httpx 发送，设置较短的超时
+        with httpx.Client(timeout=5) as client:
+            resp = client.post(
+                url,
+                json=payload,
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            )
+            
         if resp.status_code == 200:
             logger.info(f"已发送加载中提示 | chat_id={chat_id}")
         else:
             logger.error(f"发送加载中提示失败 | status={resp.status_code} | body={resp.text}")
+            # 失败时尝试发送简单文本作为兜底
+            client.post(
+                url,
+                json={
+                    "receive_id": chat_id,
+                    "msg_type": "text",
+                    "content": json.dumps({"text": f"{message} (兜底提示)"})
+                },
+                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            )
     except Exception as e:
         logger.error(f"发送加载中提示异常: {e}")
 
@@ -173,7 +186,10 @@ def _process_message(message_id: str, chat_id: str, chat_type: str, sender_name:
     
     使用锁确保同一会话的消息顺序处理，避免并发创建多个 Agent
     """
-    # 获取会话锁，确保同一 chat_id 的消息顺序处理
+    # 1. 在获取锁之前，先发送加载中提示，确保反馈第一时间到达
+    send_loading_indicator(chat_id)
+
+    # 2. 获取会话锁，确保同一 chat_id 的消息顺序处理
     chat_lock = _get_chat_lock(chat_id)
     
     with chat_lock:
