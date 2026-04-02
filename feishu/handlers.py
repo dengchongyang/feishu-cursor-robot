@@ -118,6 +118,30 @@ def create_message_handler():
     return handle_message
 
 
+def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... ⏳"):
+    """发送加载中提示"""
+    try:
+        token = TokenManager.get_token()
+        url = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=chat_id"
+        payload = {
+            "receive_id": chat_id,
+            "msg_type": "text",
+            "content": json.dumps({"text": message}),
+        }
+        resp = httpx.post(
+            url,
+            json=payload,
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            timeout=10,
+        )
+        if resp.status_code == 200:
+            logger.info(f"已发送加载中提示 | chat_id={chat_id}")
+        else:
+            logger.error(f"发送加载中提示失败 | status={resp.status_code}")
+    except Exception as e:
+        logger.error(f"发送加载中提示异常: {e}")
+
+
 def _process_message(message_id: str, chat_id: str, chat_type: str, sender_name: str):
     """
     异步处理消息，创建 Cursor Agent 任务或发送 followup
@@ -128,6 +152,8 @@ def _process_message(message_id: str, chat_id: str, chat_type: str, sender_name:
     chat_lock = _get_chat_lock(chat_id)
     
     with chat_lock:
+        # 在获取锁后，开始处理前，发送加载中提示
+        send_loading_indicator(chat_id)
         _do_process_message(message_id, chat_id, chat_type, sender_name)
 
 
