@@ -46,12 +46,24 @@ def send_error_reply(chat_id: str, error_msg: str = "抱歉，处理请求时出
             "msg_type": "text",
             "content": json.dumps({"text": error_msg}),
         }
-        resp = httpx.post(
-            url,
-            json=payload,
-            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            timeout=10,
-        )
+        # 增加重试机制
+        for attempt in range(3):
+            try:
+                with httpx.Client(timeout=10) as client:
+                    resp = client.post(
+                        url,
+                        json=payload,
+                        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                    )
+                    resp.raise_for_status()
+                    break
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                if attempt == 2:
+                    raise
+                logger.warning(f"发送错误兜底回复重试 {attempt + 1}/3: {e}")
+                import time
+                time.sleep(1)
+        
         if resp.status_code == 200:
             logger.info(f"已发送错误兜底回复 | chat_id={chat_id}")
         else:
@@ -154,13 +166,23 @@ def send_loading_indicator(chat_id: str, message: str = "小Q正在思考中... 
             "content": json.dumps(card_content),
         }
         
-        # 使用 httpx 发送，设置较短的超时
-        with httpx.Client(timeout=5) as client:
-            resp = client.post(
-                url,
-                json=payload,
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-            )
+        # 使用 httpx 发送，设置较长的超时并增加重试
+        for attempt in range(3):
+            try:
+                with httpx.Client(timeout=10) as client:
+                    resp = client.post(
+                        url,
+                        json=payload,
+                        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                    )
+                    resp.raise_for_status()
+                    break
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                if attempt == 2:
+                    raise
+                logger.warning(f"发送加载中提示重试 {attempt + 1}/3: {e}")
+                import time
+                time.sleep(1)
             
         if resp.status_code == 200:
             logger.info(f"已发送加载中提示 | chat_id={chat_id}")

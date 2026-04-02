@@ -97,13 +97,23 @@ def get_chat_history(chat_id: str, limit: int = 50) -> tuple[list[dict], list[di
     }
 
     try:
-        resp = httpx.get(
-            url,
-            params=params,
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10,
-        )
-        resp.raise_for_status()
+        # 增加重试机制
+        for attempt in range(3):
+            try:
+                resp = httpx.get(
+                    url,
+                    params=params,
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=20,  # 增加超时时间到 20s
+                )
+                resp.raise_for_status()
+                break
+            except (httpx.TimeoutException, httpx.NetworkError) as e:
+                if attempt == 2:
+                    raise
+                logger.warning(f"获取聊天历史重试 {attempt + 1}/3: {e}")
+                time.sleep(1)
+        
         data = resp.json()
 
         if data.get("code") != 0:

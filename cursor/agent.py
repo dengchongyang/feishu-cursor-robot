@@ -73,14 +73,25 @@ class CursorAgent:
         try:
             logger.debug(f"创建 Agent 任务 | repo={self.repo} | ref={self.ref}")
 
-            resp = httpx.post(
-                url,
-                json=payload,
-                auth=self._get_auth(),
-                headers={"Content-Type": "application/json"},
-                timeout=30,
-            )
-            resp.raise_for_status()
+            # 增加重试机制
+            for attempt in range(3):
+                try:
+                    resp = httpx.post(
+                        url,
+                        json=payload,
+                        auth=self._get_auth(),
+                        headers={"Content-Type": "application/json"},
+                        timeout=60,  # 增加超时时间到 60s
+                    )
+                    resp.raise_for_status()
+                    break
+                except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as e:
+                    if attempt == 2:
+                        raise
+                    logger.warning(f"创建 Agent 任务重试 {attempt + 1}/3: {e}")
+                    import time
+                    time.sleep(2)
+
             data = resp.json()
 
             logger.info(f"Agent 任务创建成功 | id={data.get('id')} | status={data.get('status')}")
@@ -117,14 +128,25 @@ class CursorAgent:
         try:
             logger.debug(f"发送 followup | agent_id={agent_id}")
 
-            resp = httpx.post(
-                url,
-                json=payload,
-                auth=self._get_auth(),
-                headers={"Content-Type": "application/json"},
-                timeout=30,
-            )
-            resp.raise_for_status()
+            # 增加重试机制
+            for attempt in range(3):
+                try:
+                    resp = httpx.post(
+                        url,
+                        json=payload,
+                        auth=self._get_auth(),
+                        headers={"Content-Type": "application/json"},
+                        timeout=60,  # 增加超时时间到 60s
+                    )
+                    resp.raise_for_status()
+                    break
+                except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as e:
+                    if attempt == 2:
+                        raise
+                    logger.warning(f"Followup 重试 {attempt + 1}/3: {e}")
+                    import time
+                    time.sleep(2)
+
             data = resp.json()
 
             logger.info(f"Followup 发送成功 | agent_id={agent_id}")
