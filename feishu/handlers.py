@@ -99,6 +99,9 @@ def create_message_handler():
                     logger.info(f"跳过消息（未@机器人）| msg_id={message_id}")
                     return
 
+            # 在进入异步线程前，先发送 Loading 提示，确保反馈及时
+            send_loading_indicator(chat_id)
+
             # 获取发送者名字
             sender_open_id = sender.sender_id.open_id if sender.sender_id else ""
             sender_name = get_user_name(sender_open_id) if sender_open_id else "未知用户"
@@ -174,9 +177,6 @@ def _process_message(message_id: str, chat_id: str, chat_type: str, sender_name:
     chat_lock = _get_chat_lock(chat_id)
     
     with chat_lock:
-        # 在获取锁后，开始处理前，发送加载中提示
-        # 仅在非重复消息时发送
-        send_loading_indicator(chat_id)
         _do_process_message(message_id, chat_id, chat_type, sender_name)
 
 
